@@ -427,29 +427,11 @@ __global__ void VertexClusterContraction(int B, const int* nvIn, const int* vtRe
     int Nv = nvIn[B-1];
     if (vj<Nv) // in the legal vertex range
     {
+        // for numerical stable of the optimal location, we use average of xyz
         if (vtReplace[vj]>0) // vertex to be contracted to
         {
-            float* Q = &vertexQuadric[10*vj];
-
-            // compute vBar and Qudric Error, update vertex location of 'vi's
-            float A[3][3] = {Q[0], Q[1], Q[2], Q[1], Q[3], Q[4], Q[2], Q[4], Q[5]};
-            float b[3] = {Q[6], Q[7], Q[8]};
-            float c    =  Q[9];
-
-            float invA[3][3];
-            float opt_xyz[3];
-            float rcondA = RrefDim3(A, b, invA, opt_xyz);
-
-            if (rcondA>rcondEPS) // A is well invertible
-            {
-                for(int it=0;it<3;it++) // accumulate vertex XYZ
-                    vertexOut[3*vj+it] = opt_xyz[it];
-            }
-            else
-            {
-                for(int it=0;it<3;it++) // accumulate vertex XYZ
-                    vertexOut[3*vj+it] = (vertexOut[3*vj+it]+vertexIn[3*vj+it])/(vtReplace[vj]+1);
-            }
+            for(int it=0;it<3;it++) // accumulate vertex XYZ
+                vertexOut[3*vj+it] = (vertexOut[3*vj+it]+vertexIn[3*vj+it])/(vtReplace[vj]+1);
         }
         if (vtReplace[vj]==0) // left out vertex, forms singular cluster, copy from original
         {
